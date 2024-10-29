@@ -60,6 +60,7 @@ ALL_BUTTONS = [ RED_BUTTON, BLUE_BUTTON, R_WHITE_BUTTON,
 
 class LightBoard:
 
+    MAX_ATTEMPTS = 5
     FIELD_BREATHE = {"id":4,"fx":2,"sx":52,"ix": 128, "bri":255,
                      "pal":0,"col":[[255,0,0],[0,0,0],[85,0,255]]}
     FIELD_MUSIC = {"id":4,"fx":48,"sx":66,"ix":192,"bri":128,
@@ -126,11 +127,28 @@ class LightBoard:
         self.brightness = brightness
         headers = { 'Content-Type': 'application/json' }
         request_data = { "ps": 6 }
-        r = requests.post(self.url_base, json=request_data, headers=headers)
-        if r.status_code == 200:
-            print(f'Initialized light board OK:  {r.status_code}')
-        else:
-            print(f'Problem with light board init:  {r.status_code}')
+
+        connect_count = 0
+        initialized = False
+
+        while connect_count < self.MAX_ATTEMPTS and not initialized:
+            try:
+                r = requests.post(self.url_base, json=request_data, headers=headers)
+
+                if r.status_code == 200:
+                    print(f'Initialized light board OK:  {r.status_code}')
+                    initialized = True
+                else:
+                    print(f'Problem with light board init:  {r.status_code}')
+            except ConnectionError:
+                print(f'Error connecting to {self.url_base}.')
+                connect_count += 1
+                time.sleep(5)
+
+        # Not being able to initialize is fatal
+        if not initialized:
+            print(f'Failed connecting to {self.url_base}')
+            sys.exit(1)
 
     def color_switch(self, color: str, state: bool):
         """Switch the requested light to be on or off.  The other
