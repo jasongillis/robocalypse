@@ -88,15 +88,6 @@ class LightBoard:
                         'col': [[255,255,255],[0,0,0],[85,0,255]]}]
                   }
 
-    ALL_OFF = {"transition": 1,
-               "seg":[{"id": 0,"on": False},
-                      {"id": 1,"on": False},
-                      {"id": 2,"on": False},
-                      {"id": 3,"on": False},
-                      {"id": 5,"on": False},
-                      {"id": 6,"on": False},
-                      {"id": 7,"on": False}]}
-
     color_id_map = {
         'red': 0,
         'blue': 1,
