@@ -23,7 +23,7 @@ from functools import partial
 Button.was_held = False
 
 MR_ROBOTO_COMMAND=['play', '-q', '/home/jgillis/audio/Mr. Roboto.mp3']
-THRILLER_COMMAND=['play', '-q', '/home/jgillis/audio/Thriller.mp3']
+# THRILLER_COMMAND=['play', '-q', '/home/jgillis/audio/Thriller.mp3']
 WALKING_COMMAND=['play', '-q', '/home/jgillis/audio/walking.mp3', 'tempo', '0.75', 'repeat', '10']
 THINKING_COMMAND=['play', '-q', '/home/jgillis/audio/thinking.mp3', 'repeat']
 UNMUTE_MIC_COMMAND=['amixer', '-q', '-c', '1', 'sset', 'Mic', 'on']
@@ -31,6 +31,10 @@ MUTE_MIC_COMMAND=['amixer', '-q', '-c', '1', 'sset', 'Mic', 'off']
 TALKING_COMMAND=['play', '-q', '|rec -d gain 30 band 1.2k 1.5k highpass 20 compand .1,.2 -inf,-30.1,-inf,-30,-30 0 -90 .1 pitch -350 equalizer 100 50 12 equalizer 900 50 -46 equalizer 2500 50 12 treble 0.6 phaser 0.6 0.66 3 0.6 2 -t bass -7 overdrive 10']
 def FARTING_COMMAND():
     return ['play', '-q', f'/home/jgillis/audio/fart{randrange(1,5)}.ogg']
+def MUSIC_COMMAND():
+    files = ['Thriller.mp3', 'Ghostbusters.mp3']
+    return ['play', '-q', f'/home/jgillis/audio/{files[randrange(1,2)]}']
+
 
 
 GPIO_3=3
@@ -158,19 +162,31 @@ class LightBoard:
             request_data = { "transition": 1,
                              'bri': self.brightness,
                              "seg": self.button_lights + [ self.field ] }
-        r = requests.post(self.url_base, json=request_data, headers=headers)
 
-        if r.status_code != 200:
-            print(f'Error in POST {r.status_code}:  {r.text}')
+        attempts = 0
+        sent = False
+        while attempts < self.MAX_ATTEMPTS and not sent:
+            try:
+                r = requests.post(self.url_base, json=request_data, headers=headers)
+
+                if r.status_code != 200:
+                    print(f'Error in POST {r.status_code}:  {r.text}')
+                else:
+                    sent = True
+            except ConnectionError:
+                attempts += 1
+                time.sleep(1)
+
+        if not sent:
+            print('Not able to send light board update.')
+
 
 
 class AudioState(Enum):
     STOPPED = 0
     WALKING = 1
     THINKING = 2
-    MR_ROBOTO = 3
-    THRILLER = 4
-    CONFUSED = 5
+    MUSIC = 3
     TALKING = 6
     FARTING = 7
 
@@ -310,7 +326,7 @@ class Robocalypse:
 
     def handle_blue_button(self):
         print('Blue button')
-        started = self.start_or_stop(AudioState.MR_ROBOTO, MR_ROBOTO_COMMAND)
+        started = self.start_or_stop(AudioState.MUSIC, MR_ROBOTO_COMMAND)
 
         # field_config = {"id":4,"fx":48,"sx":66,"ix":192,"bri":128,
         #                 "pal":5,"col":[[255,0,0],[255,166,0],[0,255,21]]}
@@ -339,7 +355,7 @@ class Robocalypse:
 
     def handle_green_button(self):
         print('Green Button')
-        started = self.start_or_stop(AudioState.THRILLER, THRILLER_COMMAND)
+        started = self.start_or_stop(AudioState.MUSIC, MUSIC_COMMAND())
 
         if started:
             self.light_board.set_field(LightBoard.FIELD_MUSIC)
