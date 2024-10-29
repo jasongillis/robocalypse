@@ -291,10 +291,14 @@ class Robocalypse:
 
 
     def go(self):
-        while True:
-            time.sleep(1)
-            print('.', end='')
-            sys.stdout.flush()
+        try:
+            while True:
+                time.sleep(1)
+                print('.', end='')
+                sys.stdout.flush()
+        except KeyboardInterrupt:
+            print('\nExiting')
+            sys.exit(0)
 
     def check_process(self) -> AudioState:
         """Check the status of the command and update the audio state"""
