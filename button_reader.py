@@ -65,8 +65,15 @@ class LightBoard:
                      "pal":0,"col":[[255,0,0],[0,0,0],[85,0,255]]}
     FIELD_MUSIC = {"id":4,"fx":48,"sx":66,"ix":192,"bri":128,
                    "pal":5,"col":[[255,0,0],[255,166,0],[0,255,21]]}
-    FIELD_WALKING = {}
-    FIELD_THINKING = {}
+    FIELD_WALKING = { "id": 4, "on": True, "bri": 255,
+                      "col": [[255,0,0],[0,0,0],[85,0,255]],
+                      "fx": 67, "sx": 58, "ix": 128, "pal": 61 }
+    FIELD_THINKING = { "id": 4, "on": True, "bri": 255,
+                       "col": [[255,0,0],[0,0,0],[85,0,255]],
+                       "fx": 13, "sx": 205, "ix": 10, "pal": 10 }
+
+    FIELD_TALKING = { "id": 4, "on": True, "bri": 255,
+                      "fx": 111, "sx": 231, "ix": 168, "pal": 55 }
 
     HEADLIGHTS = { 'transition': 1, 'bri': 128,
                    'seg': [
@@ -85,7 +92,13 @@ class LightBoard:
                        {'id': 6, 'fx': 0, 'sx': 128, 'ix': 128, 'bri': 128,
                         'col': [[255,255,255],[0,0,0],[85,0,255]]},
                        {'id': 7, 'fx': 0, 'sx': 128, 'ix': 128, 'bri': 128,
-                        'col': [[255,255,255],[0,0,0],[85,0,255]]}]
+                        'col': [[255,255,255],[0,0,0],[85,0,255]]},
+                       {'id': 8, 'fx': 0, 'sx': 128, 'ix': 128, 'bri': 128,
+                        'col': [[255,255,255],[0,0,0],[85,0,255]]},
+                       {'id': 9, 'fx': 0, 'sx': 128, 'ix': 128, 'bri': 128,
+                        'col': [[255,255,255],[0,0,0],[85,0,255]]},
+                       {'id': 11, 'fx': 0, 'sx': 128, 'ix': 128, 'bri': 128,
+                        'col': [[255,255,255],[0,0,0],[85,0,255]]}],
                   }
 
     color_id_map = {
@@ -108,6 +121,26 @@ class LightBoard:
         { 'id': 7, 'on': False, 'col': [[255,255,25]], 'fx': 0  }
     ]
 
+    shoulder_lights = {
+        'id': 8, 'on': True, 'col': [[255,170,0],[36,255,3],[0,0,0]],
+        'fx': 62, 'sx': 128, 'ix': 128, 'pal': 0
+    }
+
+    nose_light = {
+        "id": 9, "on": True, "col": [[255,0,0],[0,0,0],[0,0,0]],
+        "fx": 100, "sx": 128, "ix": 128, "pal": 0
+    }
+
+    eye_bar = {
+      "id": 10, "on": True, "col": [[255,25,25],[0,0,0],[0,0,0]],
+      "fx": 92, "sx": 255, "ix": 255,
+    }
+
+    top_light = {
+      "id": 11, "on": True, "col": [[255,25,25],[0,0,0],[0,0,0]],
+      "fx": 24, "sx": 222, "ix": 128,
+    }
+
     field  = {'id': 4, 'fx': 2, 'sx': 128, 'ix': 128,
               'bri':64, 'on': False, 'pal': 0,
               'col': [[255,0,0],[0,0,0],[85,0,255]]}
@@ -117,7 +150,7 @@ class LightBoard:
         self.url_base = url_base
         self.brightness = brightness
         headers = { 'Content-Type': 'application/json' }
-        request_data = { "ps": 6 }
+        request_data = { 'ps': 7 }
 
         connect_count = 0
         initialized = False
@@ -164,6 +197,16 @@ class LightBoard:
 
     def headlights(self):
         self.push_state(LightBoard.HEADLIGHTS)
+
+    def default_head(self):
+        request_data = { "transition": 1,
+                         'bri': self.brightness,
+                         'seg': [ self.shoulder_lights,
+                                  self.nose_light,
+                                  self.eye_bar,
+                                  self.top_light ] }
+
+        self.push_state(request_data)
 
     def push_state(self, request_data: dict = {}):
         headers = { 'Content-Type': 'application/json' }
@@ -213,6 +256,8 @@ class Robocalypse:
         self.gpios = gpios
         self.init_buttons()
 
+        self.headlights_on = False
+
         # The red button is the start button.  Wait for this press to
         # allow the WLED to boot up.  Once pressed, the rest of the
         # buttons are activated.
@@ -220,7 +265,7 @@ class Robocalypse:
 
     def startup_button(self):
         """Initialize the light board and set up the buttons."""
-        self.light_board = LightBoard('http://172.16.6.171/json/state')
+        self.light_board = LightBoard('http://192.168.199.2/json/state')
 
         # Activate all the buttons
         for button in self.buttons:
@@ -331,6 +376,7 @@ class Robocalypse:
         #                 "pal":0,"col":[[255,0,0],[0,0,0],[85,0,255]]}
         self.light_board.set_field(LightBoard.FIELD_BREATHE)
         self.light_board.push_state()
+        self.light_board.default_head()
 
         if ( self.check_process() != AudioState.STOPPED and
              self.subproc is not None ):
@@ -351,7 +397,13 @@ class Robocalypse:
 
     def handle_yellow_button(self):
         print('Yellow button')
-        self.start_or_stop(AudioState.TALKING, TALKING_COMMAND)
+        started = self.start_or_stop(AudioState.TALKING, TALKING_COMMAND)
+        if started:
+            self.light_board.set_field(LightBoard.FIELD_TALKING)
+        else:
+            self.light_board.set_field(LightBoard.FIELD_BREATHE)
+        self.light_board.push_state()
+
 
     def handle_black_button(self):
         print('Black button')
@@ -360,11 +412,21 @@ class Robocalypse:
     def handle_r_white_button(self):
         """Play the walking sound on a loop."""
         print('R White Button')
-        self.start_or_stop(AudioState.WALKING, WALKING_COMMAND)
+        started = self.start_or_stop(AudioState.WALKING, WALKING_COMMAND)
+        if started:
+            self.light_board.set_field(LightBoard.FIELD_WALKING)
+        else:
+            self.light_board.set_field(LightBoard.FIELD_BREATHE)
+        self.light_board.push_state()
 
     def handle_l_white_button(self):
         print('L White Button')
-        self.start_or_stop(AudioState.THINKING, THINKING_COMMAND)
+        started = self.start_or_stop(AudioState.THINKING, THINKING_COMMAND)
+        if started:
+            self.light_board.set_field(LightBoard.FIELD_THINKING)
+        else:
+            self.light_board.set_field(LightBoard.FIELD_BREATHE)
+        self.light_board.push_state()
 
     def handle_green_button(self):
         print('Green Button')
@@ -378,7 +440,12 @@ class Robocalypse:
 
     def headlights(self):
         """It's dark outside and it's hard to see.  Turn on some light."""
-        self.light_board.headlights()
+        if self.headlights_on:
+            self.headlights_on = False
+            self.handle_red_button()
+        else:
+            self.headlights_on = True
+            self.light_board.headlights()
 
     def start_or_stop(self, action: AudioState, command: list[str]) -> bool:
         should_start = True
