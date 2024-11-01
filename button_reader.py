@@ -22,18 +22,18 @@ from functools import partial
 # Add a property to Button
 Button.was_held = False
 
-MR_ROBOTO_COMMAND=['play', '-q', '/home/jgillis/audio/Mr. Roboto.mp3']
-# THRILLER_COMMAND=['play', '-q', '/home/jgillis/audio/Thriller.mp3']
-WALKING_COMMAND=['play', '-q', '/home/jgillis/audio/walking.mp3', 'tempo', '0.75', 'repeat', '10']
-THINKING_COMMAND=['play', '-q', '/home/jgillis/audio/thinking.mp3', 'repeat']
+MR_ROBOTO_COMMAND=['play', '-q', '/home/jgillis/robocalypse/audio/Mr. Roboto.mp3']
+# THRILLER_COMMAND=['play', '-q', '/home/jgillis/robocalypse/audio/Thriller.mp3']
+WALKING_COMMAND=['play', '-q', '/home/jgillis/robocalypse/audio/walking.mp3', 'tempo', '0.75', 'repeat', '10']
+THINKING_COMMAND=['play', '-q', '/home/jgillis/robocalypse/audio/thinking.mp3', 'repeat']
 UNMUTE_MIC_COMMAND=['amixer', '-q', '-c', '1', 'sset', 'Mic', 'on']
 MUTE_MIC_COMMAND=['amixer', '-q', '-c', '1', 'sset', 'Mic', 'off']
 TALKING_COMMAND=['play', '-q', '|rec -d gain 30 band 1.2k 1.5k highpass 20 compand .1,.2 -inf,-30.1,-inf,-30,-30 0 -90 .1 pitch -350 equalizer 100 50 12 equalizer 900 50 -46 equalizer 2500 50 12 treble 0.6 phaser 0.6 0.66 3 0.6 2 -t bass -7 overdrive 10']
 def FARTING_COMMAND():
-    return ['play', '-q', f'/home/jgillis/audio/fart{randrange(1,5)}.ogg']
+    return ['play', '-q', f'/home/jgillis/robocalypse/audio/fart{randrange(1,5)}.ogg']
 def MUSIC_COMMAND():
     files = ['Thriller.mp3', 'Ghostbusters.mp3']
-    return ['play', '-q', f'/home/jgillis/audio/{files[randrange(1,2)]}']
+    return ['play', '-q', f'/home/jgillis/robocalypse/audio/{files[randrange(1,2)]}']
 
 
 
